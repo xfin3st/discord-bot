@@ -5,6 +5,18 @@ const commands = [
   {
     name: 'ping',
     description: 'Antwortet mit Pong! 🏓'
+  },
+  {
+    name: 'imagine',
+    description: 'Erzeuge ein Bild aus einem Text-Prompt',
+    options: [
+      {
+        name: 'prompt',
+        description: 'Beschreibe das gewünschte Bild',
+        type: 3, // STRING
+        required: true
+      }
+    ]
   }
 ];
 

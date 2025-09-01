@@ -1,46 +1,79 @@
-const { EmbedBuilder } = require('discord.js');
-const findWelcomeChannel = require('../utils/findWelcomeChannel');
+const { EmbedBuilder, PermissionsBitField, ChannelType } = require('discord.js');
 
 module.exports = async (member) => {
-  // Deine Channel-ID hier eintragen
-  const channelId = "1202478042732040304";
-  const channel = member.guild.channels.cache.get(channelId);
-  if (!channel) return;
+  try {
+    // 1) Channel-ID: am besten in .env legen (WELCOME_CHANNEL_ID), sonst direkt hier eintragen
+    const channelId = process.env.WELCOME_CHANNEL_ID || "1202478042732040304";
 
-  // Avatar des neuen Members (PNG, 256px)
-  const avatarUrl = member.user.displayAvatarURL({ extension: 'png', size: 256 });
+    // 2) Channel holen (erst Cache, dann API)
+    let channel = member.guild.channels.cache.get(channelId);
+    if (!channel) {
+      channel = await member.guild.channels.fetch(channelId).catch(() => null);
+    }
+    if (!channel) {
+      console.warn(`[welcome] Channel ${channelId} nicht gefunden.`);
+      return;
+    }
 
-  // Optional: Server-Banner als großes Bild, falls vorhanden
-  const guildBanner = member.guild.bannerURL?.({ size: 1024 }) || null;
+    // Keine Threads/Foren etc.
+    if (channel.type !== ChannelType.GuildText) {
+      console.warn(`[welcome] Channel ${channelId} ist kein Textkanal.`);
+      return;
+    }
 
-  const total = member.guild.memberCount;
+    // 3) Schreibrechte prüfen
+    const me = member.guild.members.me;
+    const perms = channel.permissionsFor(me);
+    if (!perms?.has(PermissionsBitField.Flags.ViewChannel)) {
+      console.warn(`[welcome] Keine ViewChannel-Rechte in #${channel.name}`);
+      return;
+    }
+    if (!perms?.has(PermissionsBitField.Flags.SendMessages)) {
+      console.warn(`[welcome] Keine SendMessages-Rechte in #${channel.name}`);
+      return;
+    }
+    const canEmbed = perms.has(PermissionsBitField.Flags.EmbedLinks);
 
-  const embed = new EmbedBuilder()
-    .setColor(0x5865F2) // Discord Blurple – gern anpassen
-    .setAuthor({
-      name: member.guild.name,
-      iconURL: member.guild.iconURL?.({ size: 128 }) ?? undefined
-    })
-    .setTitle(`Willkommen, ${member.user.username}! 🎉`)
-    .setDescription(
-      `Hey ${member}, mega dass du da bist!\n` +
-      `📜 Schau bitte kurz in **#regeln**\n` +
-      `👋 Sag Hallo in **#vorstellung**\n` +
-      `❓ Bei Fragen einfach **@Team** pingen.`
-    )
-    .setThumbnail(avatarUrl)
-    .addFields(
-      { name: '👤 Nutzer', value: `${member.user.tag}`, inline: true },
-      { name: '🆔 ID', value: member.id, inline: true },
-      { name: '👥 Mitglieder', value: `${total}`, inline: true }
-    )
-    .setImage(guildBanner ?? null) // nur gesetzt, wenn Banner existiert
-    .setFooter({ text: 'Viel Spaß auf dem Server!' })
-    .setTimestamp(new Date());
+    // 4) Daten für Embed
+    const avatarUrl = member.user.displayAvatarURL({ extension: 'png', size: 256 });
+    const guildBanner = member.guild.bannerURL?.({ size: 1024 }) || null;
+    const total = member.guild.memberCount;
 
-  // Den User noch im Content erwähnen (Ping), plus Embed
-  await channel.send({
-    content: `${member}`,
-    embeds: [embed]
-  });
+    const embed = new EmbedBuilder()
+      .setColor(0x5865F2)
+      .setAuthor({
+        name: member.guild.name,
+        iconURL: member.guild.iconURL?.({ size: 128 }) ?? undefined
+      })
+      .setTitle(`Willkommen, ${member.user.username}! 🎉`)
+      .setDescription(
+        `Hey ${member}, mega dass du da bist!\n` +
+        `📜 Schau bitte kurz in **#regeln**\n` +
+        `👋 Sag Hallo in **#vorstellung**\n` +
+        `❓ Bei Fragen einfach **@Team** pingen.`
+      )
+      .setThumbnail(avatarUrl)
+      .addFields(
+        { name: '👤 Nutzer',  value: `${member.user.tag}`, inline: true },
+        { name: '🆔 ID',      value: member.id,           inline: true },
+        { name: '👥 Mitglieder', value: `${total}`,       inline: true }
+      )
+      .setImage(guildBanner ?? null)
+      .setFooter({ text: 'Viel Spaß auf dem Server!' })
+      .setTimestamp();
+
+    // 5) Senden – wenn Embeds verboten sind, fällt auf Plain-Text zurück
+    if (canEmbed) {
+      await channel.send({ content: `${member}`, embeds: [embed] });
+    } else {
+      await channel.send({
+        content:
+          `${member}\n` +
+          `Willkommen, **${member.user.username}**!\n` +
+          `Du bist Mitglied #${total}. (Hinweis: Bot hat keine Embed-Rechte in diesem Channel.)`
+      });
+    }
+  } catch (err) {
+    console.error('[welcome] Fehler beim Senden der Willkommensnachricht:', err);
+  }
 };

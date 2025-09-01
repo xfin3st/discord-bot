@@ -17,6 +17,64 @@ const commands = [
         required: true
       }
     ]
+  },
+  {
+    name: 'clear',
+    description: 'Löscht die letzten X Nachrichten im aktuellen Channel (Admins only)',
+    options: [
+      {
+        name: 'anzahl',
+        description: 'Wie viele (1-100)?',
+        type: 4, // INTEGER
+        required: true,
+        min_value: 1,
+        max_value: 100
+      }
+    ]
+  },
+  {
+    name: 'kick',
+    description: 'Kicke einen Nutzer (Admins only)',
+    options: [
+      {
+        name: 'user',
+        description: 'Wen kicken?',
+        type: 6, // USER
+        required: true
+      },
+      {
+        name: 'grund',
+        description: 'Warum?',
+        type: 3, // STRING
+        required: false
+      }
+    ]
+  },
+  {
+    name: 'ban',
+    description: 'Banne einen Nutzer (Admins only)',
+    options: [
+      {
+        name: 'user',
+        description: 'Wen bannen?',
+        type: 6, // USER
+        required: true
+      },
+      {
+        name: 'grund',
+        description: 'Warum?',
+        type: 3, // STRING
+        required: false
+      },
+      {
+        name: 'tage',
+        description: 'Tage Nachrichten löschen (0-7)',
+        type: 4, // INTEGER
+        required: false,
+        min_value: 0,
+        max_value: 7
+      }
+    ]
   }
 ];
 

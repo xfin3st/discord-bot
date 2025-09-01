@@ -2,15 +2,11 @@ version: "3.8"
 
 services:
   discord-bot:
-    image: node:20-alpine
+    build: .
     container_name: fin3st-discord-bot
-    working_dir: /app
     restart: unless-stopped
     environment:
-      - DISCORD_TOKEN=${DISCORD_TOKEN}
-      - CLIENT_ID=${CLIENT_ID}
-      - GUILD_ID=${GUILD_ID}
-      - NODE_ENV=production
-    volumes:
-      - ./:/app
-    command: ["sh", "-c", "npm install --omit=dev && npm run register && npm start"]
+      DISCORD_TOKEN: ${DISCORD_TOKEN}
+      CLIENT_ID: ${CLIENT_ID}
+      GUILD_ID: ${GUILD_ID}
+      NODE_ENV: production

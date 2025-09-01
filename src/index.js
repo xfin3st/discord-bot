@@ -13,11 +13,12 @@ const onInteractionCreate = require('./events/interactionCreate');
 const onGuildMemberAdd = require('./events/guildMemberAdd');
 const onGuildMemberRemove = require('./events/guildMemberRemove');
 
-// Client mit nötigen Intents (Members für Join/Leave)
+// Client mit nötigen Intents
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMembers
+    GatewayIntentBits.GuildMembers,   // Join/Leave
+    GatewayIntentBits.GuildMessages   // /clear + Anti-Spam (messageCreate)
   ],
   partials: [Partials.GuildMember, Partials.User]
 });

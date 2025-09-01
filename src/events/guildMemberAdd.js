@@ -3,7 +3,7 @@ const { EmbedBuilder, PermissionsBitField, ChannelType } = require('discord.js')
 module.exports = async (member) => {
   try {
     // 1) Channel-ID: am besten in .env legen (WELCOME_CHANNEL_ID), sonst direkt hier eintragen
-    const channelId = process.env.WELCOME_CHANNEL_ID || "1202478042732040304";
+    const channelId = process.env.WELCOME_CHANNEL_ID || "1202496784644177950";
 
     // 2) Channel holen (erst Cache, dann API)
     let channel = member.guild.channels.cache.get(channelId);

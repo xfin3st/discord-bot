@@ -12,13 +12,14 @@ const onReady = require('./events/ready');
 const onInteractionCreate = require('./events/interactionCreate');
 const onGuildMemberAdd = require('./events/guildMemberAdd');
 const onGuildMemberRemove = require('./events/guildMemberRemove');
+const onMessageCreate = require('./events/messageCreate'); // << NEU
 
 // Client mit nötigen Intents
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMembers,   // Join/Leave
-    GatewayIntentBits.GuildMessages   // /clear + Anti-Spam (messageCreate)
+    GatewayIntentBits.GuildMessages   // /clear, /purge, Anti-Spam (messageCreate)
   ],
   partials: [Partials.GuildMember, Partials.User]
 });
@@ -28,6 +29,7 @@ client.once(Events.ClientReady, (c) => onReady(c));
 client.on(Events.InteractionCreate, (i) => onInteractionCreate(i));
 client.on(Events.GuildMemberAdd, (m) => onGuildMemberAdd(m));
 client.on(Events.GuildMemberRemove, (m) => onGuildMemberRemove(m));
+client.on(Events.MessageCreate, (m) => onMessageCreate(m)); // << NEU
 
 // Slash-Commands bei Start registrieren (idempotent)
 registerCommands()

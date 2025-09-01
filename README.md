@@ -63,8 +63,8 @@ services:
 1. Unten im Stack-Formular **Environment variables** öffnen.  
 2. Folgende Variablen eintragen:
    - `DISCORD_TOKEN=xxxxxxxxxxxxxxxxxx`  
-   - `CLIENT_ID=123456789012345678`  
-   - `GUILD_ID=987654321098765432` (optional)  
+   - `CLIENT_ID=xxxxxxxxxxxxxxxx`  
+   - `GUILD_ID=xxxxxxxxxxxxxxx` (optional)  
 
 ---
 

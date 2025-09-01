@@ -2,7 +2,9 @@ const { EmbedBuilder } = require('discord.js');
 const findWelcomeChannel = require('../utils/findWelcomeChannel');
 
 module.exports = async (member) => {
-  const channel = findWelcomeChannel(member.guild);
+  // Deine Channel-ID hier eintragen
+  const channelId = "1202478042732040304";
+  const channel = member.guild.channels.cache.get(channelId);
   if (!channel) return;
 
   // Avatar des neuen Members (PNG, 256px)

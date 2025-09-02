@@ -56,6 +56,28 @@ const commands = [
       { name: 'anzahl', description: 'Wie viele (1-100)?', type: 4, required: true, min_value: 1, max_value: 100 }, // INTEGER
       { name: 'user',   description: 'Nur Nachrichten von diesem Nutzer', type: 6, required: false } // USER
     ]
+  },
+
+  {
+    name: 'presence',
+    description: 'Setzt den Bot-Status (nur Admins)',
+    options: [
+      {
+        name: 'type',
+        description: 'Art des Status',
+        type: 3,
+        required: true,
+        choices: [
+          { name: 'Playing', value: 'playing' },
+          { name: 'Streaming', value: 'streaming' },
+          { name: 'Listening', value: 'listening' },
+          { name: 'Watching', value: 'watching' },
+          { name: 'Competing', value: 'competing' }
+        ]
+      },
+      { name: 'text', description: 'Text des Status', type: 3, required: true },
+      { name: 'url',  description: 'Nur für Streaming: Twitch/YouTube URL', type: 3, required: false }
+    ]
   }
 ];
 

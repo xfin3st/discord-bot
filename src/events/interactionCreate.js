@@ -1,4 +1,4 @@
-const { PermissionsBitField } = require('discord.js');
+const { PermissionsBitField, ActivityType } = require('discord.js'); // ActivityType ergänzt
 const EPHEMERAL = 1 << 6;
 
 // "10m" / "2h" / "1d" / "1w" -> ms
@@ -44,7 +44,7 @@ module.exports = async (interaction) => {
   }
 
   // Ab hier: Admin-Only
-  if (['clear','kick','ban','timeout','purge'].includes(interaction.commandName) && !isAdmin(interaction)) {
+  if (['clear','kick','ban','timeout','purge','presence'].includes(interaction.commandName) && !isAdmin(interaction)) {
     await interaction.reply({
       content: '❌ Nur Admins dürfen diesen Befehl nutzen.',
       flags: EPHEMERAL
@@ -112,7 +112,7 @@ module.exports = async (interaction) => {
   // /timeout
   if (interaction.commandName === 'timeout') {
     const user   = interaction.options.getUser('user', true);
-    const dauer  = interaction.options.getString('dauer', true); // "10m", "2h", ...
+    const dauer  = interaction.options.getString('dauer', true);
     const reason = interaction.options.getString('grund') || 'Kein Grund angegeben';
 
     const ms = parseDurationToMs(dauer);
@@ -155,11 +155,9 @@ module.exports = async (interaction) => {
       }
 
       if (!user) {
-        // Einfach die letzten N Nachrichten
         const deleted = await interaction.channel.bulkDelete(amount, true);
         await interaction.reply({ content: `🧹 **${deleted.size}** Nachrichten gelöscht.`, flags: EPHEMERAL });
       } else {
-        // Nur Nachrichten eines Users
         const fetched = await interaction.channel.messages.fetch({ limit: 100 });
         const toDeleteArr = fetched.filter(m => m.author.id === user.id).first(amount);
         if (!toDeleteArr.length) {
@@ -171,6 +169,42 @@ module.exports = async (interaction) => {
       }
     } catch (e) {
       await interaction.reply({ content: `❌ Purge fehlgeschlagen: ${String(e.message || e)}`, flags: EPHEMERAL });
+    }
+    return;
+  }
+
+  // /presence
+  if (interaction.commandName === 'presence') {
+    const type = interaction.options.getString('type', true);
+    const text = interaction.options.getString('text', true);
+    const url  = interaction.options.getString('url');
+
+    const typeMap = {
+      playing:   ActivityType.Playing,
+      streaming: ActivityType.Streaming,
+      listening: ActivityType.Listening,
+      watching:  ActivityType.Watching,
+      competing: ActivityType.Competing
+    };
+    const activityType = typeMap[type] ?? ActivityType.Playing;
+
+    const activity = { name: text, type: activityType };
+    if (activityType === ActivityType.Streaming) {
+      // Discord zeigt "Streaming" nur mit gültiger Twitch/YT-URL an
+      activity.url = url || 'https://twitch.tv/example';
+    }
+
+    try {
+      interaction.client.user.setPresence({
+        activities: [activity],
+        status: 'online'
+      });
+      await interaction.reply({
+        content: `✅ Presence geändert: **${type}** → "${text}"${activity.url ? ` (${activity.url})` : ''}`,
+        flags: EPHEMERAL
+      });
+    } catch (err) {
+      await interaction.reply({ content: `❌ Fehler beim Setzen der Presence: ${err.message}`, flags: EPHEMERAL });
     }
     return;
   }

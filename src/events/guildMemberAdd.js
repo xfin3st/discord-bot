@@ -18,7 +18,7 @@ module.exports = async (member) => {
       return;
     }
 
-    // Berechtigungen prüfen
+    // Berechtigungen im Ziel-Channel prüfen
     const me = member.guild.members.me;
     const perms = channel.permissionsFor(me);
     if (!perms?.has(PermissionsBitField.Flags.ViewChannel)) {
@@ -30,6 +30,38 @@ module.exports = async (member) => {
       return;
     }
     const canEmbed = perms.has(PermissionsBitField.Flags.EmbedLinks);
+
+    // ---------- AUTO-ROLE: "Member" vergeben ----------
+    const roleId = process.env.MEMBER_ROLE_ID || "1412183469219385574"; // <— deine Member-Rollen-ID
+    let role = member.guild.roles.cache.get(roleId);
+    if (!role) {
+      role = await member.guild.roles.fetch(roleId).catch(() => null);
+    }
+
+    if (!role) {
+      console.warn(`[autorole] Rolle ${roleId} nicht gefunden.`);
+    } else {
+      // Bot braucht "Manage Roles" und muss höher stehen als die Zielrolle
+      const botHasManageRoles = me.permissions.has(PermissionsBitField.Flags.ManageRoles);
+      const roleAbove = me.roles.highest.position > role.position;
+      const memberManageable = member.manageable; // zusätzlicher Sicherheitscheck
+
+      if (!botHasManageRoles) {
+        console.warn('[autorole] Mir fehlt "Manage Roles".');
+      } else if (!roleAbove) {
+        console.warn(`[autorole] Bot-Rolle steht nicht über "${role.name}" (Hierarchie).`);
+      } else if (!memberManageable) {
+        console.warn('[autorole] Member ist für mich nicht veränderbar (Hierarchie).');
+      } else {
+        try {
+          await member.roles.add(role, 'Auto-Role bei Join');
+          console.log(`[autorole] ${member.user.tag} → Rolle "${role.name}" vergeben.`);
+        } catch (e) {
+          console.warn(`[autorole] Konnte Rolle nicht zuweisen: ${e.message}`);
+        }
+      }
+    }
+    // ---------- /AUTO-ROLE ----------
 
     // Daten fürs Embed
     const avatarUrl = member.user.displayAvatarURL({ extension: 'png', size: 256 });

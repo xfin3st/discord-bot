@@ -13,5 +13,8 @@ RUN npm install --omit=dev
 # Rest des Codes
 COPY . .
 
+# 🔥 Status-/Health-Endpoint Port freigeben
+EXPOSE 8080
+
 # Environment wird über .env / Compose gesetzt
 CMD ["npm", "start"]

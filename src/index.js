@@ -1,3 +1,4 @@
+// src/index.js
 require('dotenv').config();
 
 const {
@@ -14,6 +15,10 @@ const onGuildMemberAdd = require('./events/guildMemberAdd');
 const onGuildMemberRemove = require('./events/guildMemberRemove');
 const onMessageCreate = require('./events/messageCreate'); // << NEU
 
+// << NEU: Status-Server importieren
+const { attachStatusServer } = require('./status');
+let statusServer; // Referenz für sauberes Herunterfahren
+
 // Client mit nötigen Intents
 const client = new Client({
   intents: [
@@ -25,7 +30,17 @@ const client = new Client({
 });
 
 // Events
-client.once(Events.ClientReady, (c) => onReady(c));
+client.once(Events.ClientReady, (c) => {
+  onReady(c);
+
+  // << NEU: HTTP-Status-Server starten, wenn der Bot ready ist
+  //    Vorteil: username/id/guilds sind dann sofort verfügbar.
+  if (!statusServer) {
+    const port = process.env.PORT || 8080;
+    statusServer = attachStatusServer(client, port);
+  }
+});
+
 client.on(Events.InteractionCreate, (i) => onInteractionCreate(i));
 client.on(Events.GuildMemberAdd, (m) => onGuildMemberAdd(m));
 client.on(Events.GuildMemberRemove, (m) => onGuildMemberRemove(m));
@@ -39,14 +54,29 @@ registerCommands()
 // Login
 client.login(process.env.DISCORD_TOKEN);
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM erhalten, Bot fährt runter…');
-  client.destroy();
-  process.exit(0);
-});
-process.on('SIGINT', () => {
-  console.log('SIGINT erhalten, Bot fährt runter…');
-  client.destroy();
-  process.exit(0);
-});
+// ---------- Graceful Shutdown ----------
+function shutdown(signal) {
+  console.log(`${signal} erhalten, Bot fährt runter…`);
+
+  // Discord-Client sauber beenden
+  try { client.destroy(); } catch (e) { console.error('Fehler bei client.destroy():', e); }
+
+  // HTTP-Server sauber schließen (falls gestartet)
+  if (statusServer) {
+    statusServer.close(() => {
+      console.log('[status] server geschlossen');
+      process.exit(0);
+    });
+
+    // Fallback, falls close hängt (z. B. offene Verbindungen)
+    setTimeout(() => {
+      console.warn('[status] force exit after timeout');
+      process.exit(0);
+    }, 3000).unref();
+  } else {
+    process.exit(0);
+  }
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));

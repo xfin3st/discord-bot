@@ -5,7 +5,16 @@ const registerCommands = require("./registerCommands"); // bekommt gleich .comma
 function attachStatusServer(client, port = process.env.PORT || 8080) {
   const app = express();
 
-  // Optional: simpler Token-Schutz (?token=... oder Header x-status-token)
+  // --- CORS erlauben (wichtig für deine HTML-Seite) ---
+  app.use((req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-status-token");
+    res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+    if (req.method === "OPTIONS") return res.sendStatus(204);
+    next();
+  });
+
+  // --- Optional: Token-Schutz (/status?token=... oder Header x-status-token) ---
   app.use((req, res, next) => {
     if (!process.env.STATUS_TOKEN) return next();
     const token = req.query.token || req.headers["x-status-token"];
@@ -14,10 +23,10 @@ function attachStatusServer(client, port = process.env.PORT || 8080) {
       : res.status(401).json({ error: "unauthorized" });
   });
 
-  // Healthcheck für Docker
+  // --- Healthcheck (für Docker/Portainer) ---
   app.get("/healthz", (_req, res) => res.status(200).send("ok"));
 
-  // Status-JSON
+  // --- Status-JSON ---
   app.get("/status", (_req, res) => {
     const wsPing = client.ws?.ping ?? null;
     const ready = client?.isReady?.() ?? false;
@@ -37,10 +46,11 @@ function attachStatusServer(client, port = process.env.PORT || 8080) {
       uptime_s: Math.floor(process.uptime()),
       node: process.version,
       memory_mb: Math.round(process.memoryUsage().rss / 1024 / 1024),
-
-      // Commands aus registerCommands.js
       commands_count: cmds.length,
-      commands: cmds.map(c => ({ name: c.name, description: c.description }))
+      commands: cmds.map(c => ({
+        name: c.name,
+        description: c.description
+      }))
     });
   });
 

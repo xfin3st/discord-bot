@@ -1,6 +1,9 @@
 require('dotenv').config();
 const { REST, Routes } = require('discord.js');
 
+/**
+ * Definierte Slash-Commands
+ */
 const commands = [
   { name: 'ping', description: 'Antwortet mit Pong! 🏓' },
 
@@ -81,14 +84,29 @@ const commands = [
   }
 ];
 
-module.exports = async function registerCommands() {
+/**
+ * Registriert die Commands bei Discord (guild- oder global-scope).
+ * Bleibt dein Default-Export.
+ */
+async function registerCommands() {
   const token = process.env.DISCORD_TOKEN;
   const clientId = process.env.CLIENT_ID;
   const guildId = process.env.GUILD_ID || null;
 
-  if (!token || !clientId) throw new Error('CLIENT_ID oder DISCORD_TOKEN fehlt in der .env');
+  if (!token || !clientId) {
+    throw new Error('CLIENT_ID oder DISCORD_TOKEN fehlt in der .env');
+  }
+
+  // Optionaler Dry Run: wenn REGISTER_DRY_RUN=true, nur ausgeben – nicht pushen
+  const dryRun = String(process.env.REGISTER_DRY_RUN || '').toLowerCase() === 'true';
 
   const rest = new REST({ version: '10' }).setToken(token);
+
+  if (dryRun) {
+    console.log('[registerCommands] DRY RUN aktiv – es wird nichts zu Discord hochgeladen.');
+    console.table(commands.map(c => ({ name: c.name, desc: c.description, opts: (c.options || []).length })));
+    return;
+  }
 
   if (guildId) {
     await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands });
@@ -97,4 +115,30 @@ module.exports = async function registerCommands() {
     await rest.put(Routes.applicationCommands(clientId), { body: commands });
     console.log('Globale Commands registriert.');
   }
-};
+}
+
+/** 👇 NEU: Helfer-Funktionen für Status/Monitoring **/
+
+/**
+ * Gibt die vollen Command-Objekte zurück (für interne Nutzung oder Debug).
+ */
+function getDefinedCommands() {
+  return commands;
+}
+
+/**
+ * Gibt eine kompakte Zusammenfassung (Name + Beschreibung) zurück.
+ * Perfekt für /status-Endpoint.
+ */
+function getCommandsSummary() {
+  return commands.map(c => ({
+    name: c.name,
+    description: c.description
+  }));
+}
+
+/** Exports (backwards-kompatibel) **/
+module.exports = registerCommands;                 // alter Default-Export bleibt
+module.exports.commands = commands;               // rohe Liste (wie zuvor vorgeschlagen)
+module.exports.getDefinedCommands = getDefinedCommands;   // ✨ NEU
+module.exports.getCommandsSummary = getCommandsSummary;   // ✨ NEU

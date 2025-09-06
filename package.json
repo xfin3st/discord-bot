@@ -1,7 +1,7 @@
 {
   "name": "fin3st-discord-bot",
-  "version": "1.0.0",
-  "description": "Einfacher Discord Bot (Willkommen/Verlassen + /ping), Docker/Portainer-ready",
+  "version": "3.0",
+  "description": "Einfacher Discord Bot (Willkommen/Verlassen + /ping + Status), Docker/Portainer-ready",
   "main": "src/index.js",
   "type": "commonjs",
   "scripts": {
@@ -12,6 +12,7 @@
   "license": "MIT",
   "dependencies": {
     "discord.js": "^14.16.3",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
   }
 }

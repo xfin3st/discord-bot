@@ -11,7 +11,7 @@ services:
       GUILD_ID: ${GUILD_ID}
       NODE_ENV: production
       PORT: 8080
-      STATUS_TOKEN: ${STATUS_TOKEN}   # optional für Schutz /status
+      STATUS_TOKEN: ${STATUS_TOKEN}
     ports:
       - "8080:8080"
     healthcheck:

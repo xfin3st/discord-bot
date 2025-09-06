@@ -13,7 +13,7 @@ services:
       PORT: 8080
       STATUS_TOKEN: ${STATUS_TOKEN}
     ports:
-      - "8080:8080"
+      - "8090:8080"
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8080/healthz || wget -qO- http://localhost:8080/healthz || exit 1"]
       interval: 30s
